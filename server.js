@@ -13,6 +13,9 @@ const db = mysql.createConnection({
 
 function viewDepartments() {
     db.query("SELECT * FROM department", (err, res, fields) => {
+        if (err) {
+            console.error(err);
+        }
         console.log("");
         console.table(res);
         main();
@@ -21,8 +24,29 @@ function viewDepartments() {
 
 function viewRoles() {
     db.query(
-        "SELECT (role.id, title, department.name, salary) FROM role INNER JOIN department ON role.department_id = department.id",
+        "SELECT role.id, title, department.name AS department, salary FROM role INNER JOIN department ON role.department_id = department.id",
         (err, res, fields) => {
+            if (err) {
+                console.error(err);
+            }
+            console.log("");
+            console.table(res);
+            main();
+        }
+    );
+}
+
+function viewEmployees() {
+    db.query(
+        `SELECT employee.id, first_name, last_name, title, department.name AS department, salary 
+        FROM employee 
+        JOIN role 
+        ON employee.role_id = role.id 
+        JOIN department ON role.department_id = department.id`,
+        (err, res, fields) => {
+            if (err) {
+                console.error(err);
+            }
             console.log("");
             console.table(res);
             main();
@@ -36,17 +60,28 @@ function main() {
             type: "list",
             name: "choice",
             message: "What do you want to do?",
-            choices: ["View All Departments", "View all Roles", "View all employees", "Add a department", "Quit"],
+            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Quit"],
         },
     ]).then((ans) => {
         switch (ans.choice) {
-            case "View All Departments":
+            case "View all Departments":
                 viewDepartments();
+                break;
+
+            case "View all Roles":
+                viewRoles();
+                break;
+
+            case "View all Employees":
+                viewEmployees();
                 break;
 
             case "Quit":
                 process.kill(process.pid);
                 break;
+
+            default:
+                console.error("No Option Found!");
         }
     });
 }
