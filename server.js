@@ -18,7 +18,7 @@ function viewDepartments() {
         }
         console.log("");
         console.table(res);
-        main();
+        mainMenu();
     });
 }
 
@@ -31,7 +31,7 @@ function viewRoles() {
             }
             console.log("");
             console.table(res);
-            main();
+            mainMenu();
         }
     );
 }
@@ -49,12 +49,26 @@ function viewEmployees() {
             }
             console.log("");
             console.table(res);
-            main();
+            mainMenu();
         }
     );
 }
 
-function main() {
+function addDepartment() {
+    inq.prompt([
+        {
+            type: "input",
+            name: "department",
+            message: "What is the department name?",
+        },
+    ]).then((ans) => {
+        db.query(`INSERT INTO department (name) VALUES ('${ans.department}')`);
+        console.log(`${ans.department} added to departments!`);
+        mainMenu();
+    });
+}
+
+function mainMenu() {
     inq.prompt([
         {
             type: "list",
@@ -76,6 +90,10 @@ function main() {
                 viewEmployees();
                 break;
 
+            case "Add a Department":
+                addDepartment();
+                break;
+
             case "Quit":
                 process.kill(process.pid);
                 break;
@@ -86,4 +104,4 @@ function main() {
     });
 }
 
-main();
+mainMenu();
