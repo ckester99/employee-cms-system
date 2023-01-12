@@ -68,13 +68,60 @@ function addDepartment() {
     });
 }
 
+function addRole() {
+    let departments = [];
+    let department_ids = [];
+    db.query(`SELECT * FROM department`, (err, res, fields) => {
+        if (err) {
+            console.error(err);
+        }
+
+        for (const el of res) {
+            departments.push(el.name);
+            department_ids.push(el.id);
+        }
+    });
+
+    inq.prompt([
+        {
+            type: "input",
+            name: "title",
+            message: "What is the role title?",
+        },
+        {
+            type: "list",
+            name: "department",
+            message: "What department does the role belong to?",
+            choices: departments,
+        },
+        {
+            type: "number",
+            name: "salary",
+            message: "What is the role salary?",
+        },
+    ]).then((ans) => {
+        db.query(
+            `INSERT INTO role (title, salary, department_id) VALUES ('${ans.title}', ${ans.salary}, ${
+                department_ids[departments.indexOf(ans.department)]
+            })`,
+            (err, res, fields) => {
+                if (err) {
+                    console.error(err);
+                }
+            }
+        );
+        console.log(`${ans.title} added to roles!`);
+        mainMenu();
+    });
+}
+
 function mainMenu() {
     inq.prompt([
         {
             type: "list",
             name: "choice",
             message: "What do you want to do?",
-            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Quit"],
+            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Add a Role", "Quit"],
         },
     ]).then((ans) => {
         switch (ans.choice) {
@@ -92,6 +139,10 @@ function mainMenu() {
 
             case "Add a Department":
                 addDepartment();
+                break;
+
+            case "Add a Role":
+                addRole();
                 break;
 
             case "Quit":
