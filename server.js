@@ -93,6 +93,7 @@ function addRole() {
             name: "department",
             message: "What department does the role belong to?",
             choices: departments,
+            loop: false,
         },
         {
             type: "number",
@@ -160,6 +161,7 @@ function addEmployee() {
             name: "department",
             message: "What department does the employee work in?",
             choices: departments,
+            loop: false,
         },
     ]).then((ans) => {
         let roles = [];
@@ -179,14 +181,14 @@ function addEmployee() {
                 {
                     type: "list",
                     name: "role",
-                    message: "What department does the employee work in?",
+                    message: "What is the employee's title?",
                     choices: roles,
                     loop: false,
                 },
                 {
                     type: "list",
                     name: "manager",
-                    message: "What department does the employee work in?",
+                    message: "Who is the employee's manager?",
                     choices: employees,
                     loop: false,
                 },
@@ -211,13 +213,68 @@ function addEmployee() {
     });
 }
 
+function updateEmployeeRole() {
+    let employees = [];
+    let employee_ids = [];
+    db.query(`SELECT * FROM employee`, (err, res, fields) => {
+        for (const el of res) {
+            employees.push(el.first_name + " " + el.last_name);
+            employee_ids.push(el.id);
+        }
+
+        inq.prompt({
+            type: "list",
+            name: "employee",
+            message: "What employee do you want to update?",
+            choices: employees,
+            loop: false,
+        }).then((ans) => {
+            const employee_id = employee_ids[employees.indexOf(ans.employee)];
+            db.query(`SELECT department_id FROM role JOIN employee ON role_id = role.id WHERE employee.id = ${employee_id}`, (err, res, fields) => {
+                db.query(`SELECT title, id FROM role WHERE department_id = 1`, (err, res, fields) => {
+                    let titles = [];
+                    let title_ids = [];
+                    for (const el of res) {
+                        titles.push(el.title);
+                        title_ids.push(el.id);
+                    }
+
+                    inq.prompt({
+                        type: "list",
+                        name: "new_id",
+                        message: "What is the employee's new title?",
+                        choices: titles,
+                        loop: false,
+                    }).then((ans) => {
+                        const new_role_id = title_ids[titles.indexOf(ans.new_id)];
+                        db.query(`UPDATE employee SET role_id = ${new_role_id} WHERE id = ${employee_id}`, (err, res, fields) => {
+                            console.log("Employee updated sucessfully!");
+                            mainMenu();
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 function mainMenu() {
     inq.prompt([
         {
             type: "list",
             name: "choice",
             message: "What do you want to do?",
-            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Add a Role", "Add an Employee", "Quit"],
+            choices: [
+                "View all Departments",
+                "View all Roles",
+                "View all Employees",
+                "Add a Department",
+                "Add a Role",
+                "Add an Employee",
+                "Update an Employee's Role",
+                "Quit",
+            ],
+            loop: false,
         },
     ]).then((ans) => {
         switch (ans.choice) {
@@ -243,6 +300,10 @@ function mainMenu() {
 
             case "Add an Employee":
                 addEmployee();
+                break;
+
+            case "Update an Employee's Role":
+                updateEmployeeRole();
                 break;
 
             case "Quit":
