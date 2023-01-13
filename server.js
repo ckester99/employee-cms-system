@@ -115,13 +115,109 @@ function addRole() {
     });
 }
 
+function addEmployee() {
+    let employees = [];
+    let employee_ids = [];
+    db.query(`SELECT * FROM employee`, (err, res, fields) => {
+        if (err) {
+            console.error(err);
+        }
+
+        for (const el of res) {
+            employees.push(el.first_name + " " + el.last_name);
+            employee_ids.push(el.id);
+        }
+    });
+    employees.push("No Manager");
+    employee_ids.push(null);
+
+    let departments = [];
+    let department_ids = [];
+    db.query(`SELECT * FROM department`, (err, res, fields) => {
+        if (err) {
+            console.error(err);
+        }
+
+        for (const el of res) {
+            departments.push(el.name);
+            department_ids.push(el.id);
+        }
+    });
+
+    inq.prompt([
+        {
+            type: "input",
+            name: "fname",
+            message: "What is the employee's first name?",
+        },
+        {
+            type: "input",
+            name: "lname",
+            message: "What is the employee's last name?",
+        },
+        {
+            type: "list",
+            name: "department",
+            message: "What department does the employee work in?",
+            choices: departments,
+        },
+    ]).then((ans) => {
+        let roles = [];
+        let role_ids = [];
+        const department_id = department_ids[departments.indexOf(ans.department)];
+
+        db.query(`SELECT * FROM role WHERE department_id = ${department_id}`, (err, res, fields) => {
+            if (err) {
+                console.error(err);
+            }
+            for (const el of res) {
+                roles.push(el.title);
+                role_ids.push(el.id);
+            }
+
+            inq.prompt([
+                {
+                    type: "list",
+                    name: "role",
+                    message: "What department does the employee work in?",
+                    choices: roles,
+                    loop: false,
+                },
+                {
+                    type: "list",
+                    name: "manager",
+                    message: "What department does the employee work in?",
+                    choices: employees,
+                    loop: false,
+                },
+            ]).then((answer) => {
+                const first_name = ans.fname;
+                const last_name = ans.lname;
+                const role_id = role_ids[roles.indexOf(answer.role)];
+                const manager_id = employee_ids[employees.indexOf(answer.manager)];
+
+                db.query(
+                    `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${first_name}', '${last_name}', ${role_id}, ${manager_id})`,
+                    (err, res, fields) => {
+                        if (err) {
+                            console.error(err);
+                        }
+                    }
+                );
+                console.log(`${first_name} ${last_name} added to employees!`);
+                mainMenu();
+            });
+        });
+    });
+}
+
 function mainMenu() {
     inq.prompt([
         {
             type: "list",
             name: "choice",
             message: "What do you want to do?",
-            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Add a Role", "Quit"],
+            choices: ["View all Departments", "View all Roles", "View all Employees", "Add a Department", "Add a Role", "Add an Employee", "Quit"],
         },
     ]).then((ans) => {
         switch (ans.choice) {
@@ -143,6 +239,10 @@ function mainMenu() {
 
             case "Add a Role":
                 addRole();
+                break;
+
+            case "Add an Employee":
+                addEmployee();
                 break;
 
             case "Quit":
